@@ -38,18 +38,14 @@ function App() {
         setJobId(data.jobId);
         setStatus("Submitted.");
 
-        // poll here
         pollInterval = setInterval(async () => {
           const { data: statusRes } = await axios.get(
             `http://localhost:5000/status`,
             {
-              params: {
-                id: data.jobId,
-              },
+              params: { id: data.jobId },
             }
           );
           const { success, job, error } = statusRes;
-          console.log(statusRes);
           if (success) {
             const { status: jobStatus, output: jobOutput } = job;
             setStatus(jobStatus);
@@ -58,9 +54,8 @@ function App() {
             setOutput(jobOutput);
             clearInterval(pollInterval);
           } else {
-            console.error(error);
             setOutput(error);
-            setStatus("Bad request");
+            setStatus("error");
             clearInterval(pollInterval);
           }
         }, 1000);
@@ -79,37 +74,29 @@ function App() {
 
   const setDefaultLanguage = () => {
     localStorage.setItem("default-language", language);
-    console.log(`${language} set as default!`);
   };
 
   const renderTimeDetails = () => {
-    if (!jobDetails) {
-      return "";
-    }
+    if (!jobDetails) return "";
     let { submittedAt, startedAt, completedAt } = jobDetails;
-    let result = "";
-    submittedAt = moment(submittedAt).toString();
-    result += `Job Submitted At: ${submittedAt}  `;
+    let result = `Job Submitted At: ${moment(submittedAt).toString()} `;
     if (!startedAt || !completedAt) return result;
-    const start = moment(startedAt);
-    const end = moment(completedAt);
-    const diff = end.diff(start, "seconds", true);
+    const diff = moment(completedAt).diff(moment(startedAt), "seconds", true);
     result += `Execution Time: ${diff}s`;
     return result;
   };
 
   return (
     <div className="App">
-      <h1>Online Code Compiler</h1>
-      <div>
-        <label>Language:</label>
+      {/* Left side: Code editor */}
+      <div className="editor-container">
+        <h1>Online Code Compiler</h1>
+        
+        <label>Language: </label>
         <select
           value={language}
           onChange={(e) => {
-            const shouldSwitch = window.confirm(
-              "Are you sure you want to change language? WARNING: Your current code will be lost."
-            );
-            if (shouldSwitch) {
+            if (window.confirm("Your current code will be lost. Continue?")) {
               setLanguage(e.target.value);
             }
           }}
@@ -117,26 +104,30 @@ function App() {
           <option value="cpp">C++</option>
           <option value="py">Python</option>
         </select>
-      </div>
-      <br />
-      <div>
+        
         <button onClick={setDefaultLanguage}>Set Default</button>
+
+        <textarea
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        ></textarea>
+
+        <button onClick={handleSubmit}>Submit</button>
+
+        <p className={`status ${status === "error" ? "error" : "success"}`}>
+          {status}
+        </p>
       </div>
-      <br />
-      <textarea
-        rows="20"
-        cols="75"
-        value={code}
-        onChange={(e) => {
-          setCode(e.target.value);
-        }}
-      ></textarea>
-      <br />
-      <button onClick={handleSubmit}>Submit</button>
-      <p>{status}</p>
-      <p>{jobId ? `Job ID: ${jobId}` : ""}</p>
-      <p>{renderTimeDetails()}</p>
-      <p>{output}</p>
+
+      {/* Right side: Output */}
+      <div className="output-container">
+        <h2>Output</h2>
+        {jobId && <p>Job ID: {jobId}</p>}
+        <p>{renderTimeDetails()}</p>
+        <div className="output-box">
+          <pre>{output}</pre>
+        </div>
+      </div>
     </div>
   );
 }
