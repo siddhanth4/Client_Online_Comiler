@@ -1,8 +1,13 @@
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import moment from "moment";
+import AceEditor from "react-ace";
+import "brace/mode/c_cpp"; // for C++
+import "brace/mode/python"; // for Python
+import "brace/theme/github"; // you can choose another theme
+
 import "./App.css";
 import stubs from "./stubs";
-import React, { useState, useEffect } from "react";
-import moment from "moment";
 
 function App() {
   const [code, setCode] = useState("");
@@ -33,14 +38,14 @@ function App() {
       setStatus(null);
       setJobId(null);
       setJobDetails(null);
-      const { data } = await axios.post("http://localhost:5000/run", payload);
+      const { data } = await axios.post("https://online-compiler-ug9r.onrender.com/run", payload);
       if (data.jobId) {
         setJobId(data.jobId);
         setStatus("Submitted.");
 
         pollInterval = setInterval(async () => {
           const { data: statusRes } = await axios.get(
-            `http://localhost:5000/status`,
+            `https://online-compiler-ug9r.onrender.com/status`,
             {
               params: { id: data.jobId },
             }
@@ -107,10 +112,18 @@ function App() {
         
         <button onClick={setDefaultLanguage}>Set Default</button>
 
-        <textarea
+        <AceEditor
+          mode={language === "cpp" ? "c_cpp" : "python"}
+          theme="github"
           value={code}
-          onChange={(e) => setCode(e.target.value)}
-        ></textarea>
+          onChange={setCode}
+          name="code-editor"
+          editorProps={{ $blockScrolling: true }}
+          setOptions={{
+            useWorker: false, // Disable syntax checking for simplicity
+          }}
+          style={{ width: "100%", height: "100%" }}
+        />
 
         <button onClick={handleSubmit}>Submit</button>
 
