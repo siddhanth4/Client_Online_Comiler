@@ -38,7 +38,7 @@ function App() {
       setStatus(null);
       setJobId(null);
       setJobDetails(null);
-      const { data } = await axios.post("https://online-compiler-ug9r.onrender.com/run", payload);
+      const { data } = await axios.post("https://online-compiler-ug9r.onrender.com", payload);
       if (data.jobId) {
         setJobId(data.jobId);
         setStatus("Submitted.");
